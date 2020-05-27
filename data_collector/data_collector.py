@@ -21,7 +21,8 @@ if(os.path.exists('../data/raw/framedata_' + results.datasession + '.json') or (
     print('Data session files already exist, cannot overwrite')
     exit()
 
-cap = cv.VideoCapture(1)
+#Set capture to 0 for built-in webcam, 1 for USB
+cap = cv.VideoCapture(0)
 time.sleep(2)
 
 #video capture dimensions must be correctly set

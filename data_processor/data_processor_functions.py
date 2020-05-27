@@ -66,8 +66,8 @@ def probMapFromVideo(start, end):
         length = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
         print(str(length) + ' frames to process from ' + vidName)
 
-        net = cv.dnn.readNet(cv.samples.findFile('openpose_pose_mpi_faster_4_stages.prototxt'), 
-        cv.samples.findFile('pose_iter_160000.caffemodel'))
+        net = cv.dnn.readNet(os.path.relpath('openpose_pose_mpi_faster_4_stages.prototxt'), 
+        os.path.relpath('pose_iter_160000.caffemodel'))
 
         while True:
             hasFrame, frame = cap.read()
@@ -112,7 +112,7 @@ def probMapFromVideo(start, end):
             frameData[str(int(currentFrame))].append(out.tolist())
             frameData[str(int(currentFrame))].append(points)
 
-            """
+            
             #***for visualization ONLY, remove for large data proccesing event***
             probmapVIS1 = cv.resize(probmapVIS1, (frameWidth, frameHeight))
             plotProbMap(probmapVIS1, frame)
@@ -122,7 +122,7 @@ def probMapFromVideo(start, end):
             for i in range(15):
                 cv.circle(frame, points[i], 5, (25, 0, 255), 5)
             cv.imshow('frame', frame)
-            """
+            
 
         #After each vid proccess, write to proccessed json file
         
