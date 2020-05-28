@@ -79,8 +79,6 @@ for i in range(int(start), int(end)+1):
         net.setInput(blob)
         print('Processing frame ' + str(currentFrame))
         out = net.forward()
-
-        #agregate full heatmap into one data structure
         
         probmapVIS1 = out[0, 0, :, :]
         probmapVIS2 = out[0, 1, :, :]
