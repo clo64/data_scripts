@@ -127,6 +127,8 @@ while True:
 
     cv.imshow('frame', frame)
 
+    # Periodically update walabot visualization with 2D slice
+
     if frame_count%8 == 0:
         wala_data_slice, sizeX, sizeY, depth, power = wala.GetRawImageSlice()
         plt.imshow(wala_data_slice)
@@ -146,6 +148,10 @@ plt.show()
 # Close the jsonstreams objects, this adds the closing '}' to the file
 time_stamp_out.close()
 wala_out.close()
+
+# Take a quick break, walabot
+wala.Disconnect()
+wala.Clean()
 
 # Close out the cv objects, go home, go to sleep. Goodnight.
 cap.release()
