@@ -130,9 +130,12 @@ while True:
     # Periodically update walabot visualization with 2D slice
 
     if frame_count%8 == 0:
-        wala_data_slice, sizeX, sizeY, depth, power = wala.GetRawImageSlice()
-        plt.imshow(wala_data_slice)
-        plt.pause(0.05)
+        try:
+            wala_data_slice, sizeX, sizeY, depth, power = wala.GetRawImageSlice()
+            plt.imshow(wala_data_slice)
+            plt.pause(0.05)
+        except:
+            print("closing matplotlib")
 
     #cv.imshow('frame', frame)
     #frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
@@ -140,19 +143,19 @@ while True:
     #plt.pause(.05)
     
     if(cv.waitKey(1) & 0xFF == ord('q')):
+        # Close the jsonstreams objects, this adds the closing '}' to the file
+        time_stamp_out.close()
+        wala_out.close()
+
+        # Take a quick break, walabot
+        wala.Disconnect()
+        wala.Clean()
+
+        # Close out the cv objects, go home, go to sleep. Goodnight.
+        cap.release()
+        cv.destroyAllWindows()
         break
 
 #plt.ioff()
+
 plt.show()
-
-# Close the jsonstreams objects, this adds the closing '}' to the file
-time_stamp_out.close()
-wala_out.close()
-
-# Take a quick break, walabot
-wala.Disconnect()
-wala.Clean()
-
-# Close out the cv objects, go home, go to sleep. Goodnight.
-cap.release()
-cv.destroyAllWindows()
