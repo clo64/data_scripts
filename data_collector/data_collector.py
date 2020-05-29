@@ -15,6 +15,7 @@ import cv2 as cv
 import numpy as np
 from datetime import datetime
 import json
+import jsonstreams
 import time
 import argparse
 import os.path
@@ -91,42 +92,44 @@ cap.set(4, 480)
 
 fourcc = cv.VideoWriter_fourcc(*'mp4v')
 
-# Set write path destination for video output and walabot data
+# Set write path destination for video output, Walabot and timestamp
 
 video_out = cv.VideoWriter('../data/raw/rbg_' + parse_results.datasession + '.mp4', fourcc, 20.0, (640, 480))
-wala_out = ('../data/raw/wala_' + parse_results.datasession + '.json')
+time_stamp_out = jsonstreams.Stream(jsonstreams.Type.object, filename='../data/raw/framedata_' + parse_results.datasession + '.json', pretty=False)
+wala_out = jsonstreams.Stream(jsonstreams.Type.object, filename='../data/raw/wala_' + parse_results.datasession + '.json', pretty=False)
 
-# time_stamp dictionarey to agregate frame number and timestamp
 # frame_count used to incrimente every loop, matches frame captures
 
-time_stamp = {}
 frame_count = 1
 
 while True:
 
-# Trigger the walabot  for a frame, then read a camera frame
+    # Trigger the walabot  for a frame, then read a camera frame
+    # wala.GetRawImage return the 3D image, refer to Walabot API for function details
 
     wala.Trigger()
     ret, frame = cap.read()
+    wala_data = wala.GetRawImage()
 
-# Write a single video frame to file then
-# write a single walabot entry to the json stream
+    # Write a single video frame to file then
+    # write a single walabot entry to the json stream
 
+    wala_out.write(str(frame_count), wala_data)
     video_out.write(frame)
-    
-    time_stamp.update({frame_count: [str(datetime.now())] })
-    print(datetime.now())
+    time_stamp_out.write(str(frame_count), [ str(datetime.now()) ] )
 
     frame_count += 1
 
     cv.imshow('frame', frame)
     
     if(cv.waitKey(1) & 0xFF == ord('q')):
-        #on quit write timestamp to file, JSON format
-        with open('../data/raw/framedata_' + parse_results.datasession + '.json', 'w') as fp:
-            json.dump(time_stamp, fp, indent=2)
         break
 
+# Close the jsonstreams objects, this adds the closing '}' to the file
+time_stamp_out.close()
+wala_out.close()
+
+# Close out the cv objects, go home, go to sleep. Goodnight.
 cap.release()
 cv.destroyAllWindows()
 
