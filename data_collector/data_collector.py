@@ -2,10 +2,6 @@
 Writing for webcam data collection until
 walabot is received
 
-Known issue: Writing to json using built-in library jas 
-extreme limitation of pausing to create entire json strucure prior to writing
-investigation a streaming version of json-write
-
 ijson can be used for iterative parsing
 Looks like possibly jsonstreams, but it's in beta... See if it works anyway???
 """
@@ -19,6 +15,7 @@ import jsonstreams
 import time
 import argparse
 import os.path
+import threading
 
 # Argument parsing block to receive data session number as integer.
     # Script expects input as -datasession <integer>
@@ -95,12 +92,20 @@ fourcc = cv.VideoWriter_fourcc(*'mp4v')
 # Set write path destination for video output, Walabot and timestamp
 
 video_out = cv.VideoWriter('../data/raw/rbg_' + parse_results.datasession + '.mp4', fourcc, 20.0, (640, 480))
-time_stamp_out = jsonstreams.Stream(jsonstreams.Type.object, filename='../data/raw/framedata_' + parse_results.datasession + '.json', pretty=False)
-wala_out = jsonstreams.Stream(jsonstreams.Type.object, filename='../data/raw/wala_' + parse_results.datasession + '.json', pretty=False)
+time_stamp_out = jsonstreams.Stream(jsonstreams.Type.object, filename='../data/raw/framedata_' + parse_results.datasession + '.json')
+wala_out = jsonstreams.Stream(jsonstreams.Type.object, filename='../data/raw/wala_' + parse_results.datasession + '.json')
 
 # frame_count used to incrimente every loop, matches frame captures
 
 frame_count = 1
+
+plt.ion()
+"""
+ax1 = plt.subplot(1, 1, 1)
+ret, frame = cap.read()
+first_image = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+im1 = ax1.imshow(first_image)
+"""
 
 while True:
 
@@ -109,7 +114,7 @@ while True:
 
     wala.Trigger()
     ret, frame = cap.read()
-    wala_data = wala.GetRawImage()
+    wala_data, sizeX, sizeY, depth, power = wala.GetRawImage()
 
     # Write a single video frame to file then
     # write a single walabot entry to the json stream
@@ -121,9 +126,22 @@ while True:
     frame_count += 1
 
     cv.imshow('frame', frame)
+
+    if frame_count%8 == 0:
+        wala_data_slice, sizeX, sizeY, depth, power = wala.GetRawImageSlice()
+        plt.imshow(wala_data_slice)
+        plt.pause(0.05)
+
+    #cv.imshow('frame', frame)
+    #frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+    #im1.set_data(frame)
+    #plt.pause(.05)
     
     if(cv.waitKey(1) & 0xFF == ord('q')):
         break
+
+#plt.ioff()
+plt.show()
 
 # Close the jsonstreams objects, this adds the closing '}' to the file
 time_stamp_out.close()
@@ -132,4 +150,3 @@ wala_out.close()
 # Close out the cv objects, go home, go to sleep. Goodnight.
 cap.release()
 cv.destroyAllWindows()
-
