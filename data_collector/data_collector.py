@@ -16,6 +16,7 @@ import time
 import argparse
 import os.path
 import threading
+import keyboard
 
 # Argument parsing block to receive data session number as integer.
     # Script expects input as -datasession <integer>
@@ -52,15 +53,15 @@ wala.SetDynamicImageFilter(wala.FILTER_TYPE_NONE)
     # All res_* values determine angle in degrees between antenna 
     # Some Arena settings commented out for testing
 
-min_R, max_R, res_R = 30, 200, 4
+min_R, max_R, res_R = 216, 457, 5
 wala.SetArenaR(min_R, max_R, res_R)
-"""
-min_Theta, max_Theta, res_Theta = -30, 30, 5
+
+min_Theta, max_Theta, res_Theta = -19, 19, 5
 wala.SetArenaTheta(min_Theta, max_Theta, res_Theta)
 
-min_Phi, max_Phi, res_Phi = -20, 20, 5
+min_Phi, max_Phi, res_Phi = -43, 43, 5
 wala.SetArenaPhi(min_Phi, max_Phi, res_Phi)
-"""
+
 
 # Start Walabot and perform calibration
 
@@ -77,7 +78,7 @@ while calibration_status == wala.STATUS_CALIBRATING and calibration_progress < 1
 
 # Initialize video camera. Wait 1 second for 'warmup'
 
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 time.sleep(1)
 
 # WebCam capture dimensions, a cv2 method
@@ -99,7 +100,6 @@ wala_out = jsonstreams.Stream(jsonstreams.Type.object, filename='../data/raw/wal
 
 frame_count = 1
 
-plt.ion()
 """
 ax1 = plt.subplot(1, 1, 1)
 ret, frame = cap.read()
@@ -111,24 +111,34 @@ while True:
 
     # Trigger the walabot  for a frame, then read a camera frame
     # wala.GetRawImage return the 3D image, refer to Walabot API for function details
-
+    
+    start = time.time()*1000
     wala.Trigger()
     ret, frame = cap.read()
-    wala_data, sizeX, sizeY, depth, power = wala.GetRawImage()
 
+    #wala_data, sizeX, sizeY, depth, power = wala.GetRawImage()
+    
+    wala_data = wala.GetRawImage()
+    
     # Write a single video frame to file then
     # write a single walabot entry to the json stream
-
+    
     wala_out.write(str(frame_count), wala_data)
     video_out.write(frame)
     time_stamp_out.write(str(frame_count), [ str(datetime.now()) ] )
+    
 
     frame_count += 1
 
     cv.imshow('frame', frame)
 
+    end = time.time()*1000
+    print(end-start)
+    
+
     # Periodically update walabot visualization with 2D slice
 
+    """
     if frame_count%8 == 0:
         try:
             wala_data_slice, sizeX, sizeY, depth, power = wala.GetRawImageSlice()
@@ -136,13 +146,14 @@ while True:
             plt.pause(0.05)
         except:
             print("closing matplotlib")
+    """
 
     #cv.imshow('frame', frame)
     #frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     #im1.set_data(frame)
     #plt.pause(.05)
     
-    if(cv.waitKey(1) & 0xFF == ord('q')):
+    if(keyboard.is_pressed('q')):
         # Close the jsonstreams objects, this adds the closing '}' to the file
         time_stamp_out.close()
         wala_out.close()
@@ -155,7 +166,7 @@ while True:
         cap.release()
         cv.destroyAllWindows()
         break
-
+    
 #plt.ioff()
 
-plt.show()
+#start = time.time()

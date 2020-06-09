@@ -1,0 +1,63 @@
+import WalabotAPI as wala
+import time
+import keyboard
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D 
+import time
+
+THRESHOLD = 15
+
+wala.Init()
+wala.SetSettingsFolder()
+wala.ConnectAny()
+wala.SetProfile(wala.PROF_SENSOR)
+wala.SetThreshold(THRESHOLD)
+wala.SetDynamicImageFilter(wala.FILTER_TYPE_NONE)
+
+min_R, max_R, res_R = 216, 762, 8
+wala.SetArenaR(min_R, max_R, res_R)
+
+min_Theta, max_Theta, res_Theta = -19, 19, 8
+wala.SetArenaTheta(min_Theta, max_Theta, res_Theta)
+
+min_Phi, max_Phi, res_Phi = -43, 43, 8
+wala.SetArenaPhi(min_Phi, max_Phi, res_Phi)
+
+wala.Start()
+wala.StartCalibration()
+
+calibration_status, calibration_progress = wala.GetStatus()
+wala.Trigger()
+
+while calibration_status == wala.STATUS_CALIBRATING and calibration_progress < 100:
+    wala.Trigger()
+    print("Calibrating " + str(calibration_progress) + '%')
+    calibration_status, calibration_progress = wala.GetStatus()
+
+#create initial images
+
+wala.Trigger()
+wala_data = wala.GetRawImage()
+wala_data_np = np.array(wala_data[0])
+    
+sum = 0.0
+count = 0
+
+while True:
+
+    start = time.time()*1000
+    wala.Trigger()
+
+    wala_data = wala.GetRawImage()
+
+    end = time.time()*1000
+    sum = sum + (end-start)
+    count += 1
+
+    if(count%20 == 0):
+        print('fps: {}'.format(1000/(sum/20)))
+        sum = 0.0
+        count = 0   
+    
+    
